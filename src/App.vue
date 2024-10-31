@@ -1,10 +1,11 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app">
+    <HelloWorld /> <!-- ここで使用されているか確認 -->
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import HelloWorld from './components/Calendar.vue'
 
 export default {
   name: 'App',
@@ -13,6 +14,10 @@ export default {
   }
 }
 </script>
+
+export default {
+  name: 'App'
+}
 
 <style>
 #app {

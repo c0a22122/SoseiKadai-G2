@@ -1,4 +1,9 @@
-import { createApp } from 'vue'
-import App from './App.vue'
+import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router'; // routerがundefinedでないことを確認
 
-createApp(App).mount('#app')
+const app = createApp(App);
+
+app.use(router); // routerを使用している場合、ここが問題になることがあります
+
+app.mount('#app');
