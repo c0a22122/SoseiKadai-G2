@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import App from './App.vue';
-import router from './router'; // routerがundefinedでないことを確認
+import router from './router.js'; // routerがundefinedでないことを確認
 
 const app = createApp(App);
 

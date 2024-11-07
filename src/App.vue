@@ -1,12 +1,19 @@
 <template>
   <div id="app">
+    <MenuBar /> <!-- MenuBarを追加 -->
     <router-view /> <!-- ここでルートコンポーネントが表示される -->
   </div>
 </template>
 
 <script>
+// MenuBarコンポーネントをインポート
+import MenuBar from './layouts/MenuBar.vue';
+
 export default {
   name: 'App',
+  components: {
+    MenuBar, // MenuBarをコンポーネントとして登録
+  },
 };
 </script>
 
