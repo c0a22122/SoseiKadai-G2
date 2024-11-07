@@ -1,23 +1,14 @@
 <template>
   <div id="app">
-    <HelloWorld /> <!-- ここで使用されているか確認 -->
+    <router-view /> <!-- ここでルートコンポーネントが表示される -->
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/Calendar.vue'
-
 export default {
   name: 'App',
-  components: {
-    HelloWorld
-  }
-}
+};
 </script>
-
-export default {
-  name: 'App'
-}
 
 <style>
 #app {
