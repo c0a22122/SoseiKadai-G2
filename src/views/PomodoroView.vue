@@ -1,17 +1,24 @@
 <template>
     <div>
       <h1>ポモドーロ</h1>
-      <!-- ポモドーロのコンテンツをここに追加 -->
+      <!-- PomodoroTimerコンポーネントをここに追加 -->
+      <PomodoroTimer />
     </div>
-  </template>
-  
-  <script>
-  export default {
+</template>
+
+<script>
+import PomodoroTimer from '../components/Pomodoro.vue';  // 正しいパスに修正
+
+export default {
     name: 'PomodoroView',
-  };
-  </script>
-  
-  <style scoped>
-  /* スタイルをここに追加 */
-  </style>
+    components: {  // スペル修正
+      PomodoroTimer
+    },
+};
+</script>
+
+<style scoped>
+/* スタイルをここに追加 */
+</style>
+
   
