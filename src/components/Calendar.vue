@@ -1,45 +1,52 @@
 <template>
   <div class="calendar">
+    <!-- Calendar Header with Year and Month Navigation -->
     <div class="calendar-header">
-      <button @click="prevMonth">前月</button>
-      <h2>{{ currentYear }}年 {{ currentMonth + 1 }}月</h2>
-      <button @click="nextMonth">次月</button>
+      <button @click="prevMonth">＜</button>
+      <select v-model="currentYear" @change="updateCalendar">
+        <option v-for="year in yearRange" :key="year" :value="year">{{ year }}年</option>
+      </select>
+      <select v-model="currentMonth" @change="updateCalendar">
+        <option v-for="(month, index) in months" :key="index" :value="index">{{ month }}月</option>
+      </select>
+      <button @click="nextMonth">＞</button>
     </div>
 
-    <!-- カレンダーのグリッド -->
-    <div class="calendar-grid">
+    <!-- Calendar Grid -->
+    <div class="calendar-grid" @touchstart="startSwipe" @touchend="endSwipe">
       <div v-for="(day, index) in daysOfWeek" :key="'day-' + index" class="day-header">{{ day }}</div>
       <div
         v-for="(date, index) in dates"
         :key="'date-' + index"
         class="calendar-date"
-        :class="{ 'empty': !date, 'event-day': events[`${currentYear}-${currentMonth}-${date}`] }"
+        :class="{ 'empty': !date, 'selected': date === selectedDate }"
         @click="date && openEventModal(date)"
-        :style="{ backgroundColor: events[`${currentYear}-${currentMonth}-${date}`]?.color || '' }"
       >
-        <span v-if="date">{{ date }}</span>
-        <div v-if="events[`${currentYear}-${currentMonth}-${date}`]" class="event-title">
-          {{ events[`${currentYear}-${currentMonth}-${date}`]?.title }}
+        <span v-if="date" class="date-number">{{ date }}</span>
+        <div v-if="events[`${currentYear}-${currentMonth}-${date}`]" class="events-list">
+          <div
+            v-for="(event, idx) in events[`${currentYear}-${currentMonth}-${date}`]"
+            :key="'event-' + idx"
+            class="event-title"
+            :style="{ backgroundColor: event.color }"
+            @click.stop="editEvent(event, date)"
+          >
+            {{ event.title }}
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- イベント追加用モーダル -->
+    <!-- Event Modal for Adding/Editing Event -->
     <div v-if="showEventModal" class="modal-overlay" @click="closeEventModal">
       <div class="modal" @click.stop>
         <h3>{{ currentYear }}年 {{ currentMonth + 1 }}月 {{ selectedDate }}日</h3>
-        <input v-model="newEvent.title" placeholder="イベントタイトル" />
-        <input v-model="newEvent.color" type="color" placeholder="色を選択" />
-        
-        <!-- メモと入力フィールド -->
-        <textarea v-model="newEvent.note" placeholder="メモを追加"></textarea>
-        
-        <!-- Google Map リンク入力 -->
-        <input v-model="newEvent.location" placeholder="Google Map リンク (例: https://goo.gl/maps/...)" />
-
-        <!-- 地図埋め込み -->
-        <EmbedMap :location="newEvent.location" />
-
+        <input v-model="newEvent.title" placeholder="イベントタイトル" class="event-input" />
+        <div class="color-picker">
+          <label for="color-input">色を選択:</label>
+          <input id="color-input" v-model="newEvent.color" type="color" />
+        </div>
+        <textarea v-model="newEvent.note" placeholder="メモを追加" class="event-input"></textarea>
         <div class="button-group">
           <button @click="saveEvent">保存</button>
           <button @click="closeEventModal">キャンセル</button>
@@ -50,27 +57,18 @@
 </template>
 
 <script>
-import EmbedMap from './EmbedMap.vue'; // EmbedMapコンポーネントをインポート
-
 export default {
   name: 'CalendarComponent',
-  components: {
-    EmbedMap, // コンポーネントとして登録
-  },
   data() {
     return {
       currentYear: new Date().getFullYear(),
       currentMonth: new Date().getMonth(),
       selectedDate: null,
       showEventModal: false,
-      newEvent: {
-        title: '',
-        color: '#f0f0f0',
-        note: '',
-        location: ''
-      },
+      newEvent: { title: '', color: '#f0f0f0', note: '' },
       events: {},
       daysOfWeek: ["日", "月", "火", "水", "木", "金", "土"],
+      months: Array.from({ length: 12 }, (_, i) => i + 1),
     };
   },
   computed: {
@@ -78,6 +76,9 @@ export default {
       const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
       const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
       return Array(firstDay).fill(null).concat([...Array(daysInMonth).keys()].map(day => day + 1));
+    },
+    yearRange() {
+      return Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
     },
   },
   methods: {
@@ -97,10 +98,12 @@ export default {
         this.currentMonth += 1;
       }
     },
+    updateCalendar() {
+      // No additional logic needed; just binds directly to selected month/year
+    },
     openEventModal(date) {
       this.selectedDate = date;
-      const eventKey = `${this.currentYear}-${this.currentMonth}-${date}`;
-      this.newEvent = this.events[eventKey] || { title: '', color: '#f0f0f0', note: '', location: '' };
+      this.newEvent = { title: '', color: '#f0f0f0', note: '' };
       this.showEventModal = true;
     },
     closeEventModal() {
@@ -108,8 +111,27 @@ export default {
     },
     saveEvent() {
       const eventKey = `${this.currentYear}-${this.currentMonth}-${this.selectedDate}`;
-      this.events[eventKey] = { ...this.newEvent };
+      if (!this.events[eventKey]) this.events[eventKey] = [];
+      this.events[eventKey].push({ ...this.newEvent });
       this.showEventModal = false;
+    },
+    editEvent(event, date) {
+      this.selectedDate = date;
+      this.newEvent = { ...event }; // Set newEvent to the clicked event for editing
+      this.showEventModal = true;
+    },
+    startSwipe(event) {
+      this.touchStart = event.changedTouches[0].pageX;
+    },
+    endSwipe(event) {
+      const touchEnd = event.changedTouches[0].pageX;
+      const swipeDistance = touchEnd - this.touchStart;
+
+      if (swipeDistance > 50) {
+        this.prevMonth();
+      } else if (swipeDistance < -50) {
+        this.nextMonth();
+      }
     },
   },
 };
@@ -121,146 +143,177 @@ export default {
   flex-direction: column;
   align-items: center;
   font-family: 'Arial', sans-serif;
-  font-size: 16px;
   padding: 10px;
+  width: 100%;
+  height: 100vh;
+  background-color: #ffffff;
+  color: #333333;
 }
 
 .calendar-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
   width: 100%;
   margin-bottom: 20px;
+  animation: fadeIn 1s ease;
+}
+
+.calendar-header button {
+  margin: 0 5px;
+  padding: 5px 10px;
+  background-color: #282e39;
+  border: none;
+  color: #ffffff;
+  transition: transform 0.2s;
+}
+
+.calendar-header button:hover {
+  transform: scale(1.1);
+}
+
+.calendar-header select {
+  margin: 0 10px;
+  padding: 5px;
+  font-size: 1rem;
+  background-color: #282e39;
+  color: #ffffff;
+  border: none;
+  transition: all 0.2s;
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
+  gap: 10px; /* ギャップを少し小さくして、日付セルの間隔を詰める */
   width: 100%;
-}
-
-.day-header {
-  text-align: center;
-  font-weight: bold;
-  font-size: 1rem;
+  max-width: 100%;
 }
 
 .calendar-date {
-  text-align: center;
-  padding: 15px;
   cursor: pointer;
-  position: relative;
-  font-size: 1rem;
-  min-width: 40px;
-  min-height: 40px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 50%;
+  background-color: white;
+  border-radius: 12px;
+  font-size: 25px; /* 日付のフォントサイズを大きく */
+  padding: 30px; /* パディングを増やしてセルを大きく */
 }
 
-.calendar-date.empty {
-  background-color: #f0f0f0;
+.calendar-header select {
+  font-size: 1.2rem; /* セレクトボックスのフォントサイズを大きく */
 }
 
-.calendar-date.event-day {
-  background-color: #ffeb3b;
+.calendar-header button {
+  font-size: 1.2rem; /* ボタンのフォントサイズも調整 */
 }
 
-.event-title {
-  font-size: 12px;
-  margin-top: 5px;
+.calendar-date .date-number {
+  color: #333333;
+  font-size: 1.5rem; /* 日付のフォントをさらに大きく */
+}
+
+.calendar-date:hover {
+  background-color: #4b4b6d;
+  transform: scale(1.05);
+}
+
+.calendar-date.selected {
+  background-color: #e0e0e0;
+}
+
+.events-list .event-title {
+  font-size: 10px;
   font-weight: bold;
-  text-align: center;
+  padding: 2px;
+  border-radius: 4px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.events-list .event-title:hover {
+  background-color: #4b4b6d;
+  transform: scale(1.1); /* Make the event title enlarge on hover */
 }
 
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .modal {
-  background-color: white;
+  background-color: #ffffff;
   padding: 20px;
   border-radius: 8px;
-  max-width: 90%;
-  width: 400px;
-  box-sizing: border-box;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  width: 300px;
 }
 
-input, textarea {
+.event-input {
   width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 5px;
+  margin-top: 10px;
+  padding: 8px;
   border: 1px solid #ccc;
-  box-sizing: border-box;
+  border-radius: 4px;
 }
 
-button {
+.color-picker {
+  display: flex;
+  flex-direction: column;
   margin-top: 10px;
-  padding: 10px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 5px;
 }
 
 .button-group {
   display: flex;
   justify-content: space-between;
-}
-
-input[type="color"] {
-  width: 50px;
-  padding: 0;
-  border: none;
-}
-
-textarea {
-  height: 100px;
-  resize: none;
-}
-
-iframe {
   margin-top: 20px;
-  width: 100%;
-  border: none;
-  max-width: 600px;
-  height: 450px;
 }
 
-/* モバイル対応 */
-@media (max-width: 768px) {
-  .calendar {
-    padding: 5px;
-    font-size: 14px;
-  }
+.button-group button {
+  padding: 5px 10px;
+  background-color: #282e39;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
-  .calendar-header button {
-    padding: 8px;
-    font-size: 14px;
-  }
+.button-group button:hover {
+  background-color: #555;
+}
 
-  .calendar-date {
-    padding: 10px;
-    font-size: 1rem;
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
   }
-
-  .calendar-grid {
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+  100% {
+    opacity: 1;
   }
+}
 
-  .modal {
-    max-width: 90%;
+@keyframes slideUp {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 </style>
