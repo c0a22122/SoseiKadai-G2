@@ -1,0 +1,9 @@
+.
+└── SOSEIKADAI-G2
+    ├── node_modules
+    ├── public
+    └── src
+        ├── assets
+        ├── components
+        ├── layouts
+        └── views

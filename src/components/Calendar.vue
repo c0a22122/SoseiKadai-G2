@@ -1,5 +1,8 @@
 <template>
   <div class="calendar">
+    <!-- ログインボタン -->
+    <LoginButton />
+
     <!-- Calendar Header with Year and Month Navigation -->
     <div class="calendar-header">
       <button @click="prevMonth">＜</button>
@@ -57,8 +60,13 @@
 </template>
 
 <script>
+import LoginButton from './LoginButton.vue'; // ログインボタンをインポート
+
 export default {
   name: 'CalendarComponent',
+  components: {
+    LoginButton, // ログインボタンを登録
+  },
   data() {
     return {
       currentYear: new Date().getFullYear(),
@@ -138,6 +146,24 @@ export default {
 </script>
 
 <style scoped>
+/* ログインボタンのスタイル */
+.login-button {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.login-button:hover {
+  background-color: #0056b3;
+}
+
 .calendar {
   display: flex;
   flex-direction: column;

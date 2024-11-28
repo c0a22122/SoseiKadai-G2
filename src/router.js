@@ -26,7 +26,12 @@ const routes = [
     path: '/team-tasks',
     name: 'TeamTasks',
     component: () => import('./views/TeamTasksView.vue')
-  }
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('./views/LoginView.vue'),
+  }  
 ]
 
 const router = createRouter({

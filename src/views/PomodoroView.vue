@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import PomodoroTimer from '../components/Pomodoro.vue';  // 正しいパスに修正
+import PomodoroTimer from '../components/PomodoroTimer.vue';  // 正しいパスに修正
 
 export default {
     name: 'PomodoroView',
